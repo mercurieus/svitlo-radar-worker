@@ -10,7 +10,17 @@
 	"observability": {
 		"enabled": true
 	},
-	"upload_source_maps": true
+	"upload_source_maps": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "svitlo-db",
+			"database_id": "ea860a34-73e2-4f8d-bb46-d72156c29a10"
+		}
+	],
+	"triggers": {
+		"crons": ["*/15 * * * *"]
+	}
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

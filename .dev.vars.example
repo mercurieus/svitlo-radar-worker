@@ -1,0 +1,2 @@
+# Copy to .dev.vars and replace with your upstream HTTPS origin.
+UPSTREAM_BASE_URL="https://upstream.example.com"

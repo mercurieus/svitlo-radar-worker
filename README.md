@@ -65,8 +65,8 @@ public fetch handler. Local D1 is separate from production.
 
 ## Production deployment
 
-The configured Worker name is `svitloradar`; the intended address is
-`https://svitloradar.hexace.workers.dev`. This local configuration does not rename
+The configured Worker name is `svitlo-radar`; the intended address is
+`https://svitlo-radar.hexace.workers.dev`. This local configuration does not rename
 the deployed `svitlo-aggregator` Worker. Rename the existing Worker in Cloudflare
 before deploying to keep a single scheduled refresher. Deploying the new name
 without renaming the existing Worker creates a separate Worker; both could run
@@ -81,9 +81,9 @@ npx wrangler d1 migrations apply svitlo-db --remote
 npx wrangler deploy --dry-run
 npx wrangler deploy
 npx wrangler deployments status
-curl 'https://svitloradar.hexace.workers.dev/api/status'
-curl 'https://svitloradar.hexace.workers.dev/api/groups'
-curl 'https://svitloradar.hexace.workers.dev/api/schedule?group=1'
+curl 'https://svitlo-radar.hexace.workers.dev/api/status'
+curl 'https://svitlo-radar.hexace.workers.dev/api/groups'
+curl 'https://svitlo-radar.hexace.workers.dev/api/schedule?group=1'
 ```
 
 Migration 0001 uses `CREATE TABLE IF NOT EXISTS` to preserve existing data.

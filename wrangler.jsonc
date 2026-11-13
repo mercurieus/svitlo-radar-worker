@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "svitloradar",
+	"name": "svitlo-radar",
 	"main": "src/index.js",
 	"compatibility_date": "2026-11-10",
 	"observability": {

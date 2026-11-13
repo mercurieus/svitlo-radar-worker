@@ -65,13 +65,11 @@ public fetch handler. Local D1 is separate from production.
 
 ## Production deployment
 
-The configured Worker name is `svitlo-radar`; the intended address is
-`https://svitlo-radar.hexace.workers.dev`. This local configuration does not rename
-the deployed `svitlo-aggregator` Worker. Rename the existing Worker in Cloudflare
-before deploying to keep a single scheduled refresher. Deploying the new name
-without renaming the existing Worker creates a separate Worker; both could run
-Cron against the same database. Verify `UPSTREAM_BASE_URL` is configured on the
-target Worker before deployment. The existing `svitlo-db` database is retained.
+The production Worker is `svitlo-radar` at
+`https://svitlo-radar.hexace.workers.dev`. It was renamed in place from
+`svitlo-aggregator`, preserving the Worker identity and existing `svitlo-db`
+database. `UPSTREAM_BASE_URL` is configured as a production secret.
+Local `.dev.vars` values are not automatically uploaded during deployment.
 
 Review changes, run tests, then:
 
@@ -100,16 +98,21 @@ Read-only schema/snapshot diagnostic:
 npx wrangler d1 execute svitlo-db --remote --command "SELECT name, sql FROM sqlite_master WHERE type='table'; SELECT id, updated_at, length(data) AS bytes FROM snapshots;"
 ```
 
-## Production inspection
+## Production deployment verification
 
-At inspection on 2026-11-13 (Europe/Kyiv), production returned HTTP 200 with
-12 groups and 1,152 entries, last checked at `2026-11-12T23:15:44.248Z`.
-Remote D1 contained the expected table and a 103,341-byte `current` snapshot.
-The active version was `e133b806-5f73-4342-bae3-a517f26c9811`, with both scheduled
-and fetch handlers and the correct `DB` binding. The historical empty-snapshot
-failure was not reproducible; its cause remains unconfirmed. The exact deployed
-Cron expression still needs Dashboard verification. No production migration or
-code deployment was performed during this inspection.
+Deployed on 2026-11-13 (Europe/Kyiv), version
+`ec2d31cf-2ebc-4f97-8295-3b7176d54654`. The remote migration
+`0001_snapshots.sql` was applied without replacing the existing snapshot.
+The deployed Cron expression is `*/15 * * * *`.
+
+Post-deployment checks returned HTTP 200 for status, groups, and group 1's
+schedule, and HTTP 400 for group 13. The cached snapshot contained 12 groups
+and 576 entries; group 1 mapped to upstream ID 3 with 48 entries.
+An automatic Cron invocation on the deployed version completed successfully at
+`2026-11-13T00:15:59.049Z` (02:15:59 Europe/Kyiv), logging `refresh_success`
+and advancing the snapshot timestamp. Only one Worker exists after the rename.
+The historical empty-snapshot issue was not reproduced; its cause remains
+unconfirmed.
 
 Cloudflare references: [migrations](https://developers.cloudflare.com/d1/reference/migrations/),
 [Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/),

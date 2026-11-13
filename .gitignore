@@ -165,3 +165,6 @@ dist
 .env*
 !.env.example
 .wrangler/
+
+# Generated Cloudflare runtime and binding types
+worker-configuration.d.ts

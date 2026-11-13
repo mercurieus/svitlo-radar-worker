@@ -4,6 +4,23 @@ Cloudflare Worker serving cached electricity outage schedules from a configured
 upstream API. The `DB` binding points to `svitlo-db`; the configured Cron is `*/15 * * * *` (UTC).
 Public requests read D1 only. There is no public refresh endpoint.
 
+## Web dashboard
+
+Open [SvitloRadar](https://svitlo-radar.hexace.workers.dev/) for the Ukrainian
+web dashboard. It includes group selection, today/tomorrow schedules, interval
+summaries, cache freshness, and a collapsible JSON view for diagnostics.
+
+The dependency-free frontend lives in `public/` and is served by Workers Static
+Assets alongside the API. All dashboard requests use the same origin and read
+the cached API; the refresh button never triggers an upstream request.
+The browser rereads the API every five minutes. Kyiv calendar days and DST
+transitions are handled explicitly; missing slots remain unknown.
+
+Run `npm run dev` and open `http://localhost:8787/` to preview. If local D1 has no
+data, apply the local migration and invoke the local scheduled test described
+below. There is no frontend build step. `npm run deploy` publishes both the
+assets and Worker; `/api/*` always runs through the API handler.
+
 ## API
 
 - `GET /api/status`: `ok`, `stale` (last successful validation more than 20 minutes

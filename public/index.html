@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101923" />
+  <meta name="description" content="SvitloRadar — графіки відключень електроенергії у Чернівцях" />
+  <title>SvitloRadar — графіки відключень</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg:#0b121a; --panel:#121e2a; --panel2:#172634; --line:#293847;
+      --text:#edf5fa; --muted:#94a7b6; --cyan:#6ee7ed;
+      --on:#4fcd9a; --on-bg:#1e594c; --off:#fc8c90; --off-bg:#6c333e;
+      --maybe:#f5c56b; --maybe-bg:#675537; --unknown:#647787;
+      --radius:17px;
+    }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; min-height:100vh; color:var(--text); font:15px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:radial-gradient(ellipse at 90% -20%,#20445466,transparent 46%),var(--bg); }
+    a { color:var(--cyan); }
+    button,select,input { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,summary:focus-visible { outline:2px solid var(--cyan); outline-offset:3px; }
+    .shell { width:min(1120px,calc(100% - 36px)); margin:auto; }
+    header { display:flex; align-items:center; justify-content:space-between; padding:30px 0 18px; gap:16px; }
+    .brand { display:flex; align-items:center; gap:14px; }
+    .brandmark { width:45px; height:45px; display:grid; place-items:center; background:linear-gradient(145deg,#286e79,#193447); border-radius:14px; font-size:25px; box-shadow:inset 0 0 0 1px #69cad340; }
+    .brand .overline { font-size:11px; text-transform:uppercase; letter-spacing:.18em; color:var(--cyan); font-weight:750; }
+    .brand h1 { font-size:24px; line-height:1.15; margin:1px 0 0; letter-spacing:-.035em; }
+    .top-right { display:flex; align-items:center; gap:12px; }
+    .pill { display:inline-flex; gap:8px; align-items:center; padding:7px 11px; border-radius:50px; border:1px solid var(--line); color:var(--muted); font-size:12px; font-weight:650; background:#14212c; white-space:nowrap; }
+    .dot { width:7px; height:7px; border-radius:50%; background:var(--unknown); flex:none; }
+    .dot.ok { background:var(--on); box-shadow:0 0 12px #4fcd9a60; }
+    .dot.stale { background:var(--maybe); }
+    .dot.error { background:var(--off); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; background:var(--panel2); border:1px solid var(--line); padding:10px 15px; border-radius:11px; color:var(--text); font-weight:650; }
+    .btn:hover { border-color:#5e8490; background:#203443; }
+    .btn:disabled { opacity:.55; cursor:wait; }
+    .lead { margin:0 0 22px; color:var(--muted); max-width:620px; }
+    .overview { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:22px; }
+    .metric { background:linear-gradient(165deg,#162634,#101b26); border:1px solid var(--line); border-radius:var(--radius); padding:19px 20px; min-height:112px; }
+    .metric .eyebrow { color:var(--muted); font-size:12px; letter-spacing:.01em; margin-bottom:10px; }
+    .metric .value { font-size:23px; font-weight:760; letter-spacing:-.035em; line-height:1.2; }
+    .metric .minor { margin-top:7px; color:var(--muted); font-size:12px; }
+    .panel { background:linear-gradient(175deg,#142231,#101c28); border:1px solid var(--line); border-radius:var(--radius); padding:24px; margin:0 0 20px; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
+    .panel-head h2 { margin:0; font-size:20px; letter-spacing:-.035em; }
+    .sub { font-size:13px; color:var(--muted); }
+    .controls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:14px; }
+    .control { display:grid; gap:8px; min-width:190px; }
+    .control label { font-size:12px; font-weight:700; color:var(--muted); }
+    select, input { background:#0d1924; border:1px solid #39505e; border-radius:11px; color:var(--text); padding:11px 13px; min-height:45px; width:100%; }
+    .tabset { display:flex; gap:5px; background:#0d1924; padding:4px; border:1px solid var(--line); border-radius:11px; }
+    .tab { border:0; border-radius:8px; padding:9px 15px; background:transparent; color:var(--muted); min-height:37px; white-space:nowrap; }
+    .tab.active { background:#29414c; color:#e8fcfb; font-weight:750; }
+    .tip { color:var(--muted); font-size:12px; margin-top:12px; }
+    .schedule-header { display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+    .schedule-date { font-size:25px; font-weight:800; letter-spacing:-.035em; text-transform:capitalize; }
+    .stats { display:flex; flex-wrap:wrap; gap:8px; }
+    .stat-chip { border-radius:9px; background:#1d3140; padding:7px 12px; font-weight:700; font-size:13px; }
+    .stat-chip.off { color:var(--off); background:#542f3a; }
+    .stat-chip.on { color:var(--on); background:#1f403a; }
+    .stat-chip.maybe { color:var(--maybe); background:#504430; }
+    .timeline-wrap { overflow:auto; padding:5px 0 6px; }
+    .timeline { display:grid; grid-template-columns:repeat(48,minmax(11px,1fr)); gap:3px; min-width:640px; }
+    .slot { height:52px; border-radius:5px; background:var(--unknown); cursor:help; position:relative; }
+    .slot[data-state="on"] { background:var(--on-bg); border:1px solid #4fcd9a8c; }
+    .slot[data-state="off"] { background:var(--off-bg); border:1px solid #fc8c908c; }
+    .slot[data-state="maybe"] { background:var(--maybe-bg); border:1px solid #f5c56b8c; }
+    .slot[data-state="unknown"] { background:#344757; border:1px solid #546a7a; }
+    .slot.now:after { content:""; position:absolute; top:-7px; bottom:-7px; left:45%; width:2px; background:#fff; box-shadow:0 0 5px #fff; }
+    .times { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; margin-top:8px; min-width:640px; }
+    .legend { display:flex; flex-wrap:wrap; align-items:center; gap:16px; padding:17px 0 6px; color:var(--muted); font-size:12px; }
+    .legend span { display:inline-flex; align-items:center; gap:7px; }
+    .legend i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+    .hint { color:var(--muted); font-size:12px; }
+    .sections-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:24px 0 10px; }
+    .sections-head h3 { margin:0; font-size:15px; }
+    .events { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .event { border:1px solid var(--line); border-radius:12px; background:#142432; padding:13px 15px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .event-title { font-weight:650; }
+    .event-times { color:var(--muted); font-size:12px; }
+    .state-tag { white-space:nowrap; font-size:11px; font-weight:750; }
+    .state-tag.on { color:var(--on); }
+    .state-tag.off { color:var(--off); }
+    .state-tag.maybe { color:var(--maybe); }
+    .state-tag.unknown { color:var(--muted); }
+    .empty { border:1px dashed #36505e; border-radius:12px; padding:34px 14px; text-align:center; color:var(--muted); }
+    .error { border:1px solid #98555d; background:#412831; color:#ffc1c4; padding:14px 16px; border-radius:11px; margin-top:15px; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .details summary { cursor:pointer; font-weight:650; }
+    .details code { color:var(--cyan); }
+    pre { font:12px/1.6 ui-monospace,Consolas,"SFMono-Regular",monospace; border-radius:10px; padding:16px; max-height:340px; overflow:auto; color:#c5e8dd; background:#0a141c; border:1px solid var(--line); white-space:pre-wrap; overflow-wrap:anywhere; }
+    .api-list { display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; }
+    .api-list a { text-decoration:none; background:#172e3a; border-radius:8px; font-size:12px; padding:7px 10px; }
+    footer { color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; font-size:12px; padding:10px 0 35px; }
+    @media (max-width:750px) { .overview { grid-template-columns:repeat(2,minmax(0,1fr)); } .events { grid-template-columns:1fr; } header { padding-top:19px; } .panel { padding:18px; } .top-right .pill { display:none; } .schedule-date { font-size:21px; } }
+    @media (max-width:480px) { .shell { width:calc(100% - 24px); } .overview { gap:8px; } .metric { padding:15px 13px; min-height:100px; } .metric .value { font-size:19px; } .brand h1 { font-size:21px; } .brandmark { width:40px; height:40px; } .control { flex:1; } .tabset { width:100%; } .tab { flex:1; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <div class="brandmark" aria-hidden="true">⚡</div>
+        <div><div class="overline">Чернівці • Електроенергія</div><h1>SvitloRadar</h1></div>
+      </div>
+      <div class="top-right">
+        <div class="pill" id="liveBadge"><span class="dot" id="liveDot"></span><span id="liveLabel">Завантаження</span></div>
+        <button class="btn" id="reload" type="button" title="Оновити дані зараз">↻ <span>Оновити</span></button>
+      </div>
+    </header>
+
+    <p class="lead">Графіки відключень для Чернівців. Інформація з кешованого API — не датчик фактичної наявності електроенергії.</p>
+
+    <section class="overview" aria-label="Стан API">
+      <article class="metric"><div class="eyebrow">Стан агрегатора</div><div class="value" id="statusValue" aria-live="polite">—</div><div class="minor" id="statusMinor">Очікування відповіді</div></article>
+      <article class="metric"><div class="eyebrow">Останнє оновлення</div><div class="value" id="updatedValue">—</div><div class="minor" id="updatedMinor">Europe/Kyiv</div></article>
+      <article class="metric"><div class="eyebrow">Груп</div><div class="value" id="groupsValue">—</div><div class="minor">Доступні в API</div></article>
+      <article class="metric"><div class="eyebrow">Записів у графіку</div><div class="value" id="entriesValue">—</div><div class="minor" id="sourceMinor">Джерело: —</div></article>
+    </section>
+
+    <section class="panel" aria-labelledby="chooserHeading">
+      <div class="panel-head"><div><h2 id="chooserHeading">Перегляд графіка</h2><div class="sub">Оберіть чергу та день</div></div></div>
+      <div class="controls">
+        <div class="control"><label for="group">Черга відключення</label><select id="group"><option value="">Завантаження…</option></select></div>
+        <div class="control" style="min-width:240px;flex:1"><label>Дата графіка</label>
+          <div class="tabset" role="group" aria-label="Дата"><button class="tab active" type="button" data-day="0" aria-pressed="true">Сьогодні</button><button class="tab" type="button" data-day="1" aria-pressed="false">Завтра</button></div>
+        </div>
+      </div>
+      <div class="tip">API оновлюється за серверним розкладом кожні ~15 хвилин; кнопка «Оновити» лише перечитує кеш.</div>
+    </section>
+
+    <section class="panel" aria-labelledby="scheduleHeading">
+      <div class="schedule-header">
+        <div><div class="sub" id="scheduleLabel">Графік</div><div class="schedule-date" id="scheduleHeading">—</div></div>
+        <div class="stats"><span class="stat-chip off" id="offTotal">Без світла: —</span><span class="stat-chip on" id="onTotal">Зі світлом: —</span><span class="stat-chip maybe" id="maybeTotal">Можливо: —</span></div>
+      </div>
+      <div id="chartArea"><div class="empty">Отримуємо графік…</div></div>
+      <div class="legend"><span><i style="background:var(--on)"></i> Світло є</span><span><i style="background:var(--off)"></i> Світла немає</span><span><i style="background:var(--maybe)"></i> Можливе відключення</span><span><i style="background:var(--unknown)"></i> Немає даних</span></div>
+      <div class="hint" id="chartHint">Час: Europe/Kyiv. Кожна клітинка — 30 хвилин.</div>
+      <div class="sections-head"><h3>Інтервали</h3><span class="sub" id="intervalCount"></span></div>
+      <div class="events" id="events"><div class="empty">—</div></div>
+      <div class="error" id="error" role="alert" style="display:none"></div>
+    </section>
+
+    <section class="panel details" aria-label="API details">
+      <details>
+        <summary>Для розробників · JSON і діагностика</summary>
+        <p class="sub">Показано останні отримані відповіді. Це допоможе перевірити структуру нових API-ендпоїнтів.</p>
+        <div class="api-list"><a id="statusLink" href="/api/status" target="_blank" rel="noopener noreferrer">GET /api/status</a><a id="groupsLink" href="/api/groups" target="_blank" rel="noopener noreferrer">GET /api/groups</a><a id="scheduleLink" href="/api/schedule?group=1" target="_blank" rel="noopener noreferrer">GET /api/schedule</a></div>
+        <pre id="rawJson">Очікування даних…</pre>
+      </details>
+    </section>
+    <footer><span>SvitloRadar · Неофіційний переглядач графіків</span><span>Засновано на даних агрегатора. Графік може змінюватися без попередження.</span></footer>
+  </div>
+
+<script type="module" src="/app.js"></script>
+</body>
+</html>

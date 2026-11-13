@@ -1,4 +1,4 @@
-# Svitlo Aggregator
+# SvitloRadar
 
 Cloudflare Worker serving a D1 snapshot of eSvitlo schedules. The `DB` binding
 points to `svitlo-db`; the configured Cron is `*/15 * * * *` (UTC).
@@ -65,6 +65,14 @@ public fetch handler. Local D1 is separate from production.
 
 ## Production deployment
 
+The configured Worker name is `svitloradar`; the intended address is
+`https://svitloradar.hexace.workers.dev`. This local configuration does not rename
+the deployed `svitlo-aggregator` Worker. Rename the existing Worker in Cloudflare
+before deploying to keep a single scheduled refresher. Deploying the new name
+without renaming the existing Worker creates a separate Worker; both could run
+Cron against the same database. Verify `UPSTREAM_BASE_URL` is configured on the
+target Worker before deployment. The existing `svitlo-db` database is retained.
+
 Review changes, run tests, then:
 
 ```sh
@@ -73,9 +81,9 @@ npx wrangler d1 migrations apply svitlo-db --remote
 npx wrangler deploy --dry-run
 npx wrangler deploy
 npx wrangler deployments status
-curl 'https://svitlo-aggregator.saltelite.workers.dev/api/status'
-curl 'https://svitlo-aggregator.saltelite.workers.dev/api/groups'
-curl 'https://svitlo-aggregator.saltelite.workers.dev/api/schedule?group=1'
+curl 'https://svitloradar.hexace.workers.dev/api/status'
+curl 'https://svitloradar.hexace.workers.dev/api/groups'
+curl 'https://svitloradar.hexace.workers.dev/api/schedule?group=1'
 ```
 
 Migration 0001 uses `CREATE TABLE IF NOT EXISTS` to preserve existing data.

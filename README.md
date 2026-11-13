@@ -1,7 +1,7 @@
 # SvitloRadar
 
-Cloudflare Worker serving a D1 snapshot of eSvitlo schedules. The `DB` binding
-points to `svitlo-db`; the configured Cron is `*/15 * * * *` (UTC).
+Cloudflare Worker serving cached electricity outage schedules from a configured
+upstream API. The `DB` binding points to `svitlo-db`; the configured Cron is `*/15 * * * *` (UTC).
 Public requests read D1 only. There is no public refresh endpoint.
 
 ## API
